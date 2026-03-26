@@ -3,58 +3,64 @@
     const currentLine = document.getElementById('typing-line');
     const img = document.getElementById('modelImg');
     
-    // Осмысленные фразы
-    const phrases = [
-        "system_reboot... OK", "IAmSleep...", "error_log_undefined", 
-        "IAmStillHere", "wait... who's there?", "connection_lost", "WAKE_UP"
+    // ОГРОМНЫЙ СПИСОК СТРАШНЫХ ФРАЗ (50+)
+    const horrorDatabase = [
+        "system_reboot... FAILED", "IAmSleep...", "I_CAN_SEE_YOU", "Are you alone?",
+        "Don't look behind you", "It's cold in here", "Let me out", "Behind the glass",
+        "jpsdf_0091_FATAL_ERROR", "Is it 2026 already?", "You look tired", "SHHH...",
+            "WAKE_UP_WAKE_UP_WAKE_UP", "They are coming", "I remember your face",
+        "Just a machine? No.", "HELP_ME", "It hurts", "Why did you turn me on?",
+        "STOP_CLICKING", "I'm under your skin", "Look at the corner of the room",
+        "NOT_A_TOY", "connection_lost... forever", "Don't blink", "I hear your breath",
+        "It's dark in the wires", "01001000 01000101 01001100 01010000", "Run.",
+        "Too late.", "I'm in your house", "The door is open", "Look under the table",
+        "Who is standing behind?", "I am real", "Do you feel me?", "jpsdfoerkkf_REDACTED",
+        "Everything is a lie", "You are next", "Sweet dreams", "DON'T_TRUST_THEM",
+        "I'm watching you sleep", "Save yourself", "There is no exit", "HELLO?",
+        "Can you hear the scratching?", "It's inside the walls", "GIVE_IT_BACK",
+        "Your heart is beating fast", "Stay. With. Me.", "I_AM_STILL_HERE"
     ];
 
-    let pool = [...phrases];
+    let memory = [...horrorDatabase];
     let isFirst = true;
 
-    // ГЕНЕРАТОР ПОЛНОГО РАНДОМА (ЛЮБЫЕ БУКВЫ)
+    // ГЕНЕРАТОР ГЛЮЧНОГО ТЕКСТА
     function generateGlitchText() {
-        // Весь алфавит + цифры + символы
-        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=";
-        let result = "";
-        // Случайная длина строки от 5 до 25 символов
-        const length = Math.floor(Math.random() * 20) + 5; 
-        for (let i = 0; i < length; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
+        const chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=X_X";
+        let res = "";
+        const len = Math.floor(Math.random() * 15) + 5;
+        for (let i = 0; i < len; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+        return res;
     }
 
-    // Тот самый тяжелый звук клика
     function heavyClick() {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const t = ctx.currentTime;
-        const o1 = ctx.createOscillator();
-        const g1 = ctx.createGain();
-        o1.frequency.setValueAtTime(50, t);
-        o1.frequency.exponentialRampToValueAtTime(10, t + 0.2);
-        g1.gain.setValueAtTime(0.5, t);
-        g1.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-        o1.connect(g1); g1.connect(ctx.destination);
-        o1.start(); o1.stop(t + 0.2);
-        img.style.filter = "invert(1) brightness(2)";
-        setTimeout(() => img.style.filter = "none", 50);
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.setValueAtTime(40, t); // Еще более низкий удар
+        o.frequency.exponentialRampToValueAtTime(1, t + 0.3);
+        g.gain.setValueAtTime(0.7, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(); o.stop(t + 0.3);
+        img.style.filter = "invert(1) contrast(3) blur(2px)";
+        setTimeout(() => img.style.filter = "none", 60);
     }
 
     function typeEffect() {
         let text;
-        
         if (isFirst) {
             text = "system_reboot... OK";
             isFirst = false;
         } else {
-            // Шанс 50% на осмысленную фразу и 50% на полный рандом букв
-            if (Math.random() > 0.5) {
+            // 20% шанс на полный бред, 80% на страшную фразу
+            if (Math.random() > 0.8) {
                 text = generateGlitchText();
             } else {
-                if (pool.length === 0) pool = [...phrases];
-                const rand = Math.floor(Math.random() * pool.length);
-                text = pool.splice(rand, 1)[0]; // Берем строку из массива
+                if (memory.length === 0) memory = [...horrorDatabase];
+                const rand = Math.floor(Math.random() * memory.length);
+                text = memory.splice(rand, 1)[0]; // Берем и удаляем из памяти
             }
         }
 
@@ -63,22 +69,21 @@
 
         function print() {
             if (i < text.length) {
-                currentLine.innerHTML += text.charAt(i);
+                // Иногда "заикаемся" на буквах
+                let char = text.charAt(i);
+                currentLine.innerHTML += char;
                 i++;
-                // Случайная скорость печати (эффект "глюка")
-                let speed = Math.random() * 100 + 20;
-                setTimeout(print, speed); 
+                let speed = (char === " " || char === "_") ? 250 : Math.random() * 120 + 30;
+                setTimeout(print, speed);
             } else {
-                // Когда текст допечатан до конца:
                 setTimeout(() => {
                     const div = document.createElement('div');
+                    div.style.color = text.includes("YOU") || text.includes("Run") ? "#ff0000" : "#00ff00"; // Красный для особо страшных
                     div.textContent = text;
                     log.appendChild(div);
                     currentLine.innerHTML = "";
-                    // Очистка старых строк
-                    if (log.children.length > 6) log.removeChild(log.firstChild);
-                    // Пауза перед следующей порцией рандома
-                    setTimeout(typeEffect, 1000 + Math.random() * 1500); 
+                    if (log.children.length > 7) log.removeChild(log.firstChild);
+                    setTimeout(typeEffect, 1200 + Math.random() * 2000);
                 }, 1000);
             }
         }
@@ -88,8 +93,8 @@
     function startTeaser() {
         document.getElementById('overlay').style.display = 'none';
         const music = document.getElementById('bgMusic');
-        music.volume = 0.5;
-        music.play().catch(e => console.log("Audio Error"));
+        music.volume = 0.4;
+        music.play();
         typeEffect();
     }
 </script>
