@@ -1,187 +1,86 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Teaser Terminal</title>
-    <style>
-        /* Оформление страницы */
-        body { 
-            margin: 0; 
-            background-color: #050505; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            overflow: hidden; 
-            font-family: 'Courier New', Courier, monospace; 
-            color: #00ff00; 
+<script>
+    const log = document.getElementById('log-content');
+    const currentLine = document.getElementById('typing-line');
+    const img = document.getElementById('modelImg');
+    
+    const phrases = [
+        "system_reboot... OK", "IAmSleep...", "error_log_undefined", 
+        "IAmStillHere", "wait... who's there?", "connection_lost", "WAKE_UP"
+    ];
+
+    let pool = [...phrases];
+    let isFirst = true;
+
+    // ГЕНЕРАТОР ПОЛНОГО РАНДОМА (БУКВЕННЫЙ МУСОР)
+    function generateGlitchText() {
+        const chars = "jpsdfkxz01_";
+        let result = "";
+        const length = Math.floor(Math.random() * 15) + 5; // Длина от 5 до 20 символов
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
+        return result;
+    }
 
-        /* Контейнер для твоей модели */
-        .model-container img { 
-            max-width: 80%; 
-            max-height: 80%; 
-            filter: drop-shadow(0 0 20px rgba(0,255,0,0.1)); 
-            cursor: pointer; 
-            transition: all 0.1s; 
-        }
+    function heavyClick() {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const t = ctx.currentTime;
+        const o1 = ctx.createOscillator();
+        const g1 = ctx.createGain();
+        o1.frequency.setValueAtTime(50, t);
+        o1.frequency.exponentialRampToValueAtTime(10, t + 0.2);
+        g1.gain.setValueAtTime(0.5, t);
+        g1.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+        o1.connect(g1); g1.connect(ctx.destination);
+        o1.start(); o1.stop(t + 0.2);
+        img.style.filter = "invert(1) brightness(2)";
+        setTimeout(() => img.style.filter = "none", 50);
+    }
 
-        /* Черный квадрат с текстом в углу */
-        #console-box { 
-            position: fixed; 
-            bottom: 25px; 
-            right: 25px; 
-            width: 320px; 
-            height: 180px; 
-            background: rgba(0, 0, 0, 0.95); 
-            border: 1px solid #1a1a1a; 
-            padding: 15px; 
-            font-size: 14px; 
-            line-height: 1.5; 
-            box-shadow: 0 0 40px rgba(0,0,0,1); 
-            overflow: hidden; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: flex-end; 
-        }
-
-        /* Мигающий курсор */
-        .cursor { 
-            display: inline-block; 
-            width: 10px; 
-            height: 16px; 
-            background-color: #00ff00; 
-            margin-left: 5px; 
-            vertical-align: middle; 
-            animation: blink 0.8s step-end infinite; 
-        }
-        @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
-
-        /* Начальный экран */
-        #overlay { 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            background: black; 
-            color: #333; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            cursor: pointer; 
-            z-index: 100; 
-            letter-spacing: 5px; 
-            text-transform: uppercase; 
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Нажми сюда, чтобы запустить музыку и печать -->
-    <div id="overlay" onclick="startTeaser()">[ system_standby ]</div>
-
-    <div class="model-container">
-        <!-- Твоя картинка -->
-        <img id="modelImg" src="model.png" onclick="heavyClick()">
-    </div>
-
-    <div id="console-box">
-        <div id="log-content"></div>
-        <div><span id="typing-line"></span><span class="cursor"></span></div>
-    </div>
-
-    <!-- Твоя музыка -->
-    <audio id="bgMusic" loop>
-        <source src="music.mp3" type="audio/mpeg">
-    </audio>
-
-    <script>
-        const log = document.getElementById('log-content');
-        const currentLine = document.getElementById('typing-line');
-        const img = document.getElementById('modelImg');
+    function typeEffect() {
+        let text;
         
-        const phrases = [
-            "jpsdfoerkkf", 
-            "kkkkkkkkkkkkkkkkkkkkkkkkkk", 
-            "IAmSleep...", 
-            "error_log_undefined", 
-            "jpsdf_0091", 
-            "IAmStillHere", 
-            "wait... who's there?", 
-            "zzzzzzzzzzzzzzzzzzzz"
-        ];
-
-        let pool = [...phrases];
-        let firstRun = true;
-
-        // ТОТ САМЫЙ КРУТОЙ ЗВУК КЛИКА (БЕЗ ФАЙЛА)
-        function heavyClick() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const t = ctx.currentTime;
-            
-            // Слой 1: Низкий удар
-            const o1 = ctx.createOscillator();
-            const g1 = ctx.createGain();
-            o1.frequency.setValueAtTime(50, t);
-            o1.frequency.exponentialRampToValueAtTime(10, t + 0.2);
-            g1.gain.setValueAtTime(0.6, t);
-            g1.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-            o1.connect(g1); g1.connect(ctx.destination);
-            
-            // Слой 2: Металлический лязг
-            const o2 = ctx.createOscillator();
-            const g2 = ctx.createGain();
-            o2.type = 'triangle';
-            o2.frequency.setValueAtTime(120, t);
-            g2.gain.setValueAtTime(0.3, t);
-            g2.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-            o2.connect(g2); g2.connect(ctx.destination);
-            
-            o1.start(); o2.start();
-            o1.stop(t + 0.2); o2.stop(t + 0.1);
-
-            // Эффект "глюка" при клике
-            img.style.filter = "invert(1) brightness(2)";
-            setTimeout(() => img.style.filter = "none", 50);
-        }
-
-        function typeEffect() {
-            let text;
-            if (firstRun) {
-                text = "system_reboot... OK";
-                firstRun = false;
+        if (isFirst) {
+            text = "system_reboot... OK";
+            isFirst = false;
+        } else {
+            // Шанс 40%, что выпадет полный рандом букв, иначе фраза из списка
+            if (Math.random() > 0.6) {
+                text = generateGlitchText();
             } else {
                 if (pool.length === 0) pool = [...phrases];
                 const rand = Math.floor(Math.random() * pool.length);
                 text = pool.splice(rand, 1)[0];
             }
+        }
 
-            let i = 0;
-            currentLine.innerHTML = "";
+        let i = 0;
+        currentLine.innerHTML = "";
 
-            function print() {
-                if (i < text.length) {
-                    currentLine.innerHTML += text.charAt(i);
-                    i++;
-                    setTimeout(print, 70); // Скорость печати
-                } else {
-                    setTimeout(() => {
-                        const div = document.createElement('div');
-                        div.textContent = text;
-                        log.appendChild(div);
-                        currentLine.innerHTML = "";
-                        if (log.children.length > 6) log.removeChild(log.firstChild);
-                        setTimeout(typeEffect, 1500); // Пауза перед новой фразой
-                    }, 1000);
-                }
+        function print() {
+            if (i < text.length) {
+                currentLine.innerHTML += text.charAt(i);
+                i++;
+                // Скорость печати: если мусор, то печатает рывками (быстрее)
+                let speed = text.includes("_") ? 30 : 80;
+                setTimeout(print, speed); 
+            } else {
+                setTimeout(() => {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    log.appendChild(div);
+                    currentLine.innerHTML = "";
+                    if (log.children.length > 6) log.removeChild(log.firstChild);
+                    setTimeout(typeEffect, 1000 + Math.random() * 2000); 
+                }, 1000);
             }
-            print();
         }
+        print();
+    }
 
-        function startTeaser() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('bgMusic').play();
-            typeEffect();
-        }
-    </script>
-</body>
-</html>
+    function startTeaser() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('bgMusic').play();
+        typeEffect();
+    }
+</script>
