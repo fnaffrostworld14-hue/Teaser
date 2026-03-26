@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Teaser Final</title>
+    <style>
+        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        .model-container { position: relative; z-index: 1; text-align: center; }
+        /* Если картинка не найдется, будет виден этот текст */
+        .model-container img { max-width: 80vw; max-height: 80vh; filter: drop-shadow(0 0 20px rgba(255,255,255,0.1)); border: none; }
+        
+        #console-box { position: fixed; bottom: 20px; right: 20px; width: 300px; height: 160px; background: rgba(0, 0, 0, 0.95); border: 1px solid #333; padding: 12px; color: #0f0; font-size: 13px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; z-index: 10; }
+        .cursor { display: inline-block; width: 8px; height: 15px; background: #0f0; margin-left: 5px; animation: blink 0.8s step-end infinite; vertical-align: middle; }
+        @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
+
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #666; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 999; font-size: 14px; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+    <div id="overlay" onclick="start()">[ СИСТЕМА ОЖИДАНИЯ: НАЖМИ ДЛЯ ЗАПУСКА ]</div>
+
+    <div class="model-container">
+        <!-- Пробуем загрузить как PNG, если не выйдет - попробуй переименовать в коде на .jpg -->
+        <img id="targetImg" src="model.png" alt="[ ОШИБКА: ФАЙЛ MODEL.PNG НЕ НАЙДЕН В ПАПКЕ ]">
+    </div>
+
+    <div id="console-box">
+        <div id="log"></div>
+        <div><span id="line"></span><span class="cursor"></span></div>
+    </div>
+
+    <audio id="music" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const log = document.getElementById('log');
+        const line = document.getElementById('line');
+        const phrases = ["jpsdfoerkkf", "kkkkkkkkkkkkkkkkk", "IAmSleep...", "jpsdf_error", "IAmStillHere", "wait...", "zzzzzzzz", "connection_lost"];
+        let pool = [...phrases];
+        let isFirst = true;
+
+        function type() {
+            let text;
+            if (isFirst) {
+                text = "system_reboot... OK";
+                isFirst = false;
+            } else {
+                if (pool.length === 0) pool = [...phrases];
+                const idx = Math.floor(Math.random() * pool.length);
+                text = pool[idx];
+                pool.splice(idx, 1);
+            }
+
+            let i = 0;
+            line.innerHTML = ""; 
+
+            function print() {
+                if (i < text.length) {
+                    line.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(print, 60); 
+                } else {
+                    setTimeout(() => {
+                        const d = document.createElement('div');
+                        d.textContent = text;
+                        log.appendChild(d);
+                        line.innerHTML = ""; 
+                        if (log.children.length > 5) log.removeChild(log.firstChild);
+                        setTimeout(type, 1500); 
+                    }, 1000);
+                }
+            }
+            print();
+        }
+
+        function start() {
+            document.getElementById('overlay').style.display = 'none';
+            const audio = document.getElementById('music');
+            
+            // Пытаемся запустить музыку
+            audio.play().catch(function(error) {
+                console.log("Музыка не найдена. Проверь, что файл music.mp3 лежит в папке.");
+            });
+            
+            type();
+        }
+    </script>
+</body>
+</html>
